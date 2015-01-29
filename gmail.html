@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+      <title>Gmail App</title>
+      <script src="jquery-1.11.2.min.js"></script>
+      <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    </head>
+
+    <body style="background-color: black;">
+      <div class="clearDiv" style="height: 40px;"></div>
+      <div id="mailCount" style="width:68%; float:left;"> </div>
+      <div id="mailStats" style="width:30%; float:right;">
+        <div class="totalMails" style="background:#E6E6E6; font-weight: bold;"> 
+          <div> Total Mails </div>
+        </div>
+        <div class="unseenMails" style="background:#E6E6E6; font-weight: bold;"> 
+          <div> Unseen Mails </div>
+        </div>
+      </div>
+    </body>
+    
+
+    <script>
+    d3.json('GmailSenderData.json', function(json) {
+      var root = {};
+      root.name = "Mail Counts";
+      root.children = new Array();
+        for (var key in json) {
+          if (json.hasOwnProperty(key)) {
+            var item = {};
+            item.mailId = key;
+            item.mailCount = json[key];
+            root.children.push(item);
+          }
+      }
+      var svg = d3.select("#mailCount")
+              .append("svg")
+              .attr("width",500)
+              .attr("height",500); 
+
+      var bubble = d3.layout.pack()
+                     .size([500,500])
+                     .padding(3)
+                     .value(function(d) {return d.mailCount;});
+
+      var nodes = bubble.nodes(root) 
+                        .filter(function(d) { return !d.children; }); 
+
+      var vis = svg.selectAll('circle') 
+                   .data(nodes, function(d) { return d.mailId; }); 
+
+      var colour = d3.scale.category10();
+
+      vis.enter().append('circle') 
+                 .attr('transform', function(d) { return 'translate(' + d.x + ',' + d.y + ')'; }) 
+                 .attr('r', function(d) { return d.r; })
+                 .style("fill", function(d) { return colour(d.mailId)}) 
+                 .attr('class', function(d) { return d.mailId; });
+      
+      vis.enter().append("text")
+                 .attr("dx", function(d) { return d.x; })
+                 .attr("dy", function(d) { return d.y; })
+                 .style("text-anchor", "middle")
+                 .text(function(d) { return d.mailCount; });
+
+      vis.enter().append("text")
+                 .attr("dx", function(d) { return d.x; })
+                 .attr("dy", function(d) { return d.y+15; })
+                 .style("text-anchor", "middle")
+                 .style("font-size", function(d) { return "13px"; })
+                 .text(function(d) { return d.mailId.split("@")[0].split("<")[1]; });
+    });
+    </script>
+</html>
